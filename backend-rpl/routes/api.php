@@ -18,15 +18,23 @@ Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
         ]);
     });
 
-    // BUAT ADMIN / PETUGAS VIA API (masih pakai middleware)
+    // BUAT ADMIN / PETUGAS VIA API
     Route::post('/create-admin', [UserController::class, 'createAdmin']);
     Route::post('/create-petugas', [UserController::class, 'createPetugas']);
+
+    // Admin hanya bisa create/update/delete Donatur
+    Route::post('/donatur', [DonaturController::class, 'store']);
+    Route::put('/donatur/{donatur}', [DonaturController::class, 'update']);
+    Route::delete('/donatur/{donatur}', [DonaturController::class, 'destroy']);
+
+    // Admin hanya bisa create/update/delete Donasi
+    Route::post('/donasi', [DonasiController::class, 'store']);
+    Route::put('/donasi/{donasi}', [DonasiController::class, 'update']);
+    Route::delete('/donasi/{donasi}', [DonasiController::class, 'destroy']);
 });
 
 // REGISTER ADMIN PERTAMA
 Route::post('/register-admin', [AuthController::class, 'registerAdmin']);
-
-
 
 
 // =====================
@@ -60,12 +68,19 @@ Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
 
 // =====================
-// LOGOUT & API RESOURCE
+// LOGOUT
 // =====================
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
 
-    Route::apiResource('donatur', DonaturController::class);
-    Route::apiResource('donasi', DonasiController::class);
-    Route::get('laporan', [DonasiController::class, 'laporan']);
+    // Semua user login bisa lihat data Donatur / Donasi
+    Route::get('/donatur', [DonaturController::class, 'index']);
+    Route::get('/donatur/{donatur}', [DonaturController::class, 'show']);
+
+
+    // Laporan bisa diakses semua user login
+    Route::get('/laporan', [DonasiController::class, 'laporan']);
+
+    Route::get('/donasi', [DonasiController::class, 'index']);
+    Route::get('/donasi/{donasi}', [DonasiController::class, 'show']);
 });

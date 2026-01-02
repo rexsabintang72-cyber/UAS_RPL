@@ -41,28 +41,30 @@ class AuthController extends Controller
     // LOGIN
     // =====================
     public function login(Request $request)
-    {
-        $request->validate([
-            'email' => 'required|email',
-            'password' => 'required'
-        ]);
+{
+    $request->validate([
+        'email' => 'required|email',
+        'password' => 'required'
+    ]);
 
-        if (!Auth::attempt($request->only('email', 'password'))) {
-            return response()->json([
-                'message' => 'Email atau password salah'
-            ], 401);
-        }
-
-        $user = $request->user();
-
-        $token = $user->createToken('api-token')->plainTextToken;
-
+    if (!Auth::attempt($request->only('email', 'password'))) {
         return response()->json([
-            'message' => 'Login berhasil',
-            'token' => $token,
-            'user' => $user
-        ]);
+            'message' => 'Email atau password salah'
+        ], 401);
     }
+
+    $user = User::where('email', $request->email)->first();
+
+    $token = $user->createToken('api-token')->plainTextToken;
+
+    return response()->json([
+        'message' => 'Login berhasil',
+        'token' => $token,
+        'user' => $user   // ⬅️ role AKAN IKUT
+    ]);
+}
+
+
 
     // =====================
     // LOGOUT

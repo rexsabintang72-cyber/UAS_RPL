@@ -16,6 +16,7 @@ class Donasi extends Model
         'jenis_donasi',
         'jumlah',
         'status',
+        'verifikasi_admin'
     ];
 
     public function donatur()

@@ -17,7 +17,7 @@ return new class extends Migration
     $table->date('tanggal');
     $table->string('jenis_donasi');
     $table->decimal('jumlah', 15, 2);
-    $table->enum('status', ['diproses', 'diterima', 'sudah disalurkan'])->default('diproses');
+    $table->enum('status', ['diproses', 'diterima', 'sudah disalurkan', 'ditolak'])->default('diproses');
     $table->timestamps();
 });
 

@@ -7,6 +7,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\FileController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\AdminDonasiController;
 
 // =====================
 // DASHBOARD ADMIN
@@ -36,11 +37,29 @@ Route::middleware(['auth:sanctum', 'role:user'])->group(function () {
     });
 });
 
+
+
+// =====================
+// DASHBOARD PETUGAS
+// =====================
+Route::middleware(['auth:sanctum', 'role:petugas'])->group(function () {
+    Route::get('/petugas/dashboard', function () {
+        return response()->json([
+            'message' => 'Welcome Petugas Dashboard'
+        ]);
+    });
+
+    // contoh route untuk update status bantuan
+    Route::post('/petugas/update-bantuan', [DonasiController::class, 'updateStatusByPetugas']);
+});
+
+
 // =====================
 // AUTH
 // =====================
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
+Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth:sanctum');
 
 // =====================
 // API RESOURCE (WAJIB LOGIN)
@@ -53,4 +72,29 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // LAPORAN
     Route::get('/laporan', [DonasiController::class, 'laporan']);
+});
+
+// =====================
+// LAPORAN PETUGAS
+// =====================
+Route::middleware(['auth:sanctum', 'role:petugas'])->group(function () {
+    Route::get('/petugas/laporan', [DonasiController::class, 'laporanPetugas']);
+});
+
+//untuk pdf
+Route::middleware('auth:sanctum')->get(
+    '/laporan-pdf',
+    [DonasiController::class, 'laporanPdf']
+);
+
+Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
+    Route::put('/donasi/{id}/verifikasi', [DonasiController::class, 'verifikasiAdmin']);
+});
+
+// ==========================
+// ROUTE ADMIN DONASI
+// ==========================
+Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
+    Route::get('/admin/donasi', [AdminDonasiController::class, 'index']);
+    Route::post('/admin/donasi/verifikasi', [AdminDonasiController::class, 'updateVerifikasi']);
 });

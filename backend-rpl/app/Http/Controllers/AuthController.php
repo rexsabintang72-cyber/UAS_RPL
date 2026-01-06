@@ -24,7 +24,7 @@ class AuthController extends Controller
             'name' => $request->name,
             'email' => $request->email,
             'password' => Hash::make($request->password),
-            'role' => 'user' // ⬅️ DEFAULT ROLE
+            'role' => 'user'
         ]);
 
         $token = $user->createToken('auth_token')->plainTextToken;
@@ -104,4 +104,28 @@ class AuthController extends Controller
             'user' => $admin
         ], 201);
     }
+
+    public function createPetugas(Request $request)
+{
+    $request->validate([
+        'name' => 'required|string',
+        'email' => 'required|email|unique:users',
+        'password' => 'required|min:6'
+    ]);
+
+    $petugas = User::create([
+        'name' => $request->name,
+        'email' => $request->email,
+        'password' => Hash::make($request->password),
+        'role' => 'petugas' //role baru
+    ]);
+
+    $token = $petugas->createToken('petugas-token')->plainTextToken;
+
+    return response()->json([
+        'message' => 'Register petugas berhasil',
+        'token' => $token,
+        'user' => $petugas
+    ], 201);
+}
 }

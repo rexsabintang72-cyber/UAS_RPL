@@ -95,6 +95,8 @@ Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
 // ROUTE ADMIN DONASI
 // ==========================
 Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
+    Route::get('/admin/dashboard', [AdminDonasiController::class, 'dashboard']);
+    
     Route::get('/admin/donasi', [AdminDonasiController::class, 'index']);
     Route::post('/admin/donasi/verifikasi', [AdminDonasiController::class, 'updateVerifikasi']);
 });

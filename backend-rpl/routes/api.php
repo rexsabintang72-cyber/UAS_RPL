@@ -9,6 +9,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\AdminDonasiController;
 
+
 // =====================
 // DASHBOARD ADMIN
 // =====================
@@ -65,7 +66,7 @@ Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth:sanc
 // API RESOURCE (WAJIB LOGIN)
 // =====================
 Route::middleware('auth:sanctum')->group(function () {
-    Route::post('/logout', [AuthController::class, 'logout']);
+    Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth:sanctum'); //ini tadi tak ubah
 
     Route::apiResource('donatur', DonaturController::class);
     Route::apiResource('donasi', DonasiController::class);
@@ -96,7 +97,12 @@ Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
 // ==========================
 Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
     Route::get('/admin/dashboard', [AdminDonasiController::class, 'dashboard']);
-    
+
     Route::get('/admin/donasi', [AdminDonasiController::class, 'index']);
     Route::post('/admin/donasi/verifikasi', [AdminDonasiController::class, 'updateVerifikasi']);
+});
+
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/user/profile', [UserController::class, 'profile']);
+    Route::post('/user/profile', [UserController::class, 'updateProfile']);
 });

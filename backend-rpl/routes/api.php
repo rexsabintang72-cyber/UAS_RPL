@@ -106,3 +106,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/user/profile', [UserController::class, 'profile']);
     Route::post('/user/profile', [UserController::class, 'updateProfile']);
 });
+
+Route::delete('/user/profile/photo', [UserController::class, 'deletePhoto'])
+    ->middleware('auth:sanctum');

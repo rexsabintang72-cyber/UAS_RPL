@@ -55,12 +55,22 @@ class UserController extends Controller
     // =====================================================
 
     // ambil data user login
-    public function profile()
+// Ambil profile donatur
+    // ambil data user login
+public function profile()
     {
-        return response()->json(Auth::user());
+        $user = Auth::user();
+
+        return response()->json([
+            'id' => $user->id,
+            'name' => $user->name,
+            'email' => $user->email,
+            'role' => $user->role,
+            'foto' => $user->foto ? url('storage/avatar/' . $user->foto) : null
+        ]);
     }
 
-    // update profil donatur
+    // update profil
     public function updateProfile(Request $request)
     {
         $user = Auth::user();
@@ -72,24 +82,54 @@ class UserController extends Controller
 
         $user->name = $request->name;
 
+        // Jika ada file baru
         if ($request->hasFile('foto')) {
-            // hapus foto lama
-            if ($user->foto) {
-                Storage::delete('public/avatar/' . $user->foto);
-            }
+    if ($user->foto && Storage::disk('public')->exists('avatar/' . $user->foto)) {
+        Storage::disk('public')->delete('avatar/' . $user->foto);
+    }
 
-            $file = $request->file('foto');
-            $filename = time() . '_' . $file->getClientOriginalName();
-            $file->storeAs('public/avatar', $filename);
+    $file = $request->file('foto');
+    $filename = time() . '_' . $file->getClientOriginalName();
+    $file->storeAs('avatar', $filename, 'public'); // pakai disk public
 
-            $user->foto = $filename;
-        }
+    $user->foto = $filename;
+}
 
         $user->save();
 
         return response()->json([
             'message' => 'Profil berhasil diperbarui',
-            'user' => $user
+            'user' => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'role' => $user->role,
+                'foto' => $user->foto ? url('storage/avatar/' . $user->foto) : null
+            ]
         ]);
     }
+
+    // hapus foto profil
+public function deletePhoto()
+{
+    $user = Auth::user();
+
+    if ($user->foto && Storage::disk('public')->exists('avatar/' . $user->foto)) {
+        Storage::disk('public')->delete('avatar/' . $user->foto);
+    }
+
+    $user->foto = null;
+    $user->save();
+
+    return response()->json([
+        'message' => 'Foto profil berhasil dihapus',
+        'user' => [
+            'id' => $user->id,
+            'name' => $user->name,
+            'email' => $user->email,
+            'role' => $user->role,
+            'foto' => null, // pastikan React tahu ini null
+        ]
+    ]);
+}
 }

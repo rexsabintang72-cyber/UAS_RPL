@@ -36,4 +36,10 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
+
+    public function donatur()
+{
+    return $this->hasOne(Donatur::class);
+}
+
 }

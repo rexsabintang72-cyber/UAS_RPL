@@ -13,10 +13,17 @@ class Donatur extends Model
         'nama',
         'kontak',
         'jenis_donatur',
+         'user_id'
     ];
 
     public function donasis()
     {
         return $this->hasMany(Donasi::class);
     }
+
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
+
 }

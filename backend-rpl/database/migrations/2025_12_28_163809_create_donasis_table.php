@@ -11,15 +11,20 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('donasis', function (Blueprint $table) {
+    Schema::create('donasis', function (Blueprint $table) {
     $table->id();
     $table->foreignId('donatur_id')->constrained('donaturs')->onDelete('cascade');
     $table->date('tanggal');
     $table->string('jenis_donasi');
-    $table->decimal('jumlah', 15, 2);
+    $table->decimal('jumlah', 15, 2)->nullable(); // untuk uang
+    $table->string('nama_barang')->nullable();     // untuk barang
+    $table->string('jumlah_barang')->nullable();   // untuk barang
+    $table->text('keterangan')->nullable();
     $table->enum('status', ['diproses', 'diterima', 'sudah disalurkan', 'ditolak'])->default('diproses');
+    $table->enum('verifikasi_admin', ['pending', 'disetujui', 'ditolak'])->default('pending');
     $table->timestamps();
 });
+
 
     }
 

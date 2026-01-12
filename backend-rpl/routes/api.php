@@ -9,7 +9,6 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\AdminDonasiController;
 
-
 // =====================
 // DASHBOARD ADMIN
 // =====================
@@ -38,8 +37,6 @@ Route::middleware(['auth:sanctum', 'role:user'])->group(function () {
     });
 });
 
-
-
 // =====================
 // DASHBOARD PETUGAS
 // =====================
@@ -54,7 +51,6 @@ Route::middleware(['auth:sanctum', 'role:petugas'])->group(function () {
     Route::post('/petugas/update-bantuan', [DonasiController::class, 'updateStatusByPetugas']);
 });
 
-
 // =====================
 // AUTH
 // =====================
@@ -63,16 +59,42 @@ Route::post('/login', [AuthController::class, 'login']);
 Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth:sanctum');
 
 // =====================
-// API RESOURCE (WAJIB LOGIN)
+// ROUTE DONATUR (POST bisa anonim)
 // =====================
-Route::middleware('auth:sanctum')->group(function () {
-    Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth:sanctum'); //ini tadi tak ubah
 
-    Route::apiResource('donatur', DonaturController::class);
+// POST donatur bisa diakses anonim
+Route::post('/donatur', [DonaturController::class, 'store']);
+
+// Bisa diakses tanpa login → akan otomatis dibuat donatur anonim
+Route::post('/donasi/public', [DonasiController::class, 'storePublic']);
+
+// Routes lain tetap wajib login
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/logout', [AuthController::class, 'logout']);
+
+    // Donatur (GET/PUT/DELETE) wajib login
+    Route::get('/donatur', [DonaturController::class, 'index']);
+    Route::get('/donatur/{donatur}', [DonaturController::class, 'show']);
+    Route::put('/donatur/{donatur}', [DonaturController::class, 'update']);
+    Route::delete('/donatur/{donatur}', [DonaturController::class, 'destroy']);
+
+    // Donasi tetap login (bisa CRUD)
     Route::apiResource('donasi', DonasiController::class);
 
     // LAPORAN
     Route::get('/laporan', [DonasiController::class, 'laporan']);
+
+    // Profil user
+    Route::get('/user/profile', [UserController::class, 'profile']);
+    Route::post('/user/profile', [UserController::class, 'updateProfile']);
+    Route::delete('/user/profile/photo', [UserController::class, 'deletePhoto']);
+});
+
+// =====================
+// ADMIN & PETUGAS MELIHAT SEMUA DONASI (termasuk anonim)
+// =====================
+Route::middleware(['auth:sanctum', 'role:admin,petugas'])->group(function () {
+    Route::get('/donasi', [DonasiController::class, 'index']);
 });
 
 // =====================
@@ -80,32 +102,37 @@ Route::middleware('auth:sanctum')->group(function () {
 // =====================
 Route::middleware(['auth:sanctum', 'role:petugas'])->group(function () {
     Route::get('/petugas/laporan', [DonasiController::class, 'laporanPetugas']);
+
+    Route::middleware('auth:sanctum')->get('/petugas/laporan-pdf', [DonasiController::class, 'laporanPdf']);
+
 });
 
-//untuk pdf
-Route::middleware('auth:sanctum')->get(
-    '/laporan-pdf',
-    [DonasiController::class, 'laporanPdf']
-);
+// =====================
+// LAPORAN PDF
+// =====================
+Route::middleware('auth:sanctum')->get('/laporan-pdf', [DonasiController::class, 'laporanPdf']);
 
+// =====================
+// VERIFIKASI DONASI OLEH ADMIN
+// =====================
 Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
     Route::put('/donasi/{id}/verifikasi', [DonasiController::class, 'verifikasiAdmin']);
-});
 
-// ==========================
-// ROUTE ADMIN DONASI
-// ==========================
-Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
+    // ==========================
+    // ROUTE ADMIN DONASI
+    // ==========================
     Route::get('/admin/dashboard', [AdminDonasiController::class, 'dashboard']);
-
     Route::get('/admin/donasi', [AdminDonasiController::class, 'index']);
     Route::post('/admin/donasi/verifikasi', [AdminDonasiController::class, 'updateVerifikasi']);
+
 });
 
-Route::middleware('auth:sanctum')->group(function () {
-    Route::get('/user/profile', [UserController::class, 'profile']);
-    Route::post('/user/profile', [UserController::class, 'updateProfile']);
+// =====================
+// DASHBOARD PETUGAS TAMBAHAN
+// =====================
+Route::middleware(['auth:sanctum', 'role:petugas'])->group(function () {
+    Route::get('/petugas/dashboard-data', [DonasiController::class, 'dashboardPetugas']);
+    Route::get('/petugas/pelacakan', [DonasiController::class, 'pelacakanPetugas']);
 });
 
-Route::delete('/user/profile/photo', [UserController::class, 'deletePhoto'])
-    ->middleware('auth:sanctum');
+Route::middleware('auth:sanctum')->get('/admin/laporan-pdf', [DonasiController::class, 'laporanPdf']);

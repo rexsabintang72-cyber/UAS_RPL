@@ -11,13 +11,15 @@ return new class extends Migration
      */
     public function up(): void
     {
-       Schema::create('donaturs', function (Blueprint $table) {
+ Schema::create('donaturs', function (Blueprint $table) {
     $table->id();
     $table->string('nama');
     $table->string('kontak');
-    $table->enum('jenis_donatur', ['perorangan', 'instansi']);
+    $table->enum('jenis_donatur', ['perorangan', 'instansi', 'anonim'])->default('anonim');
+    $table->foreignId('user_id')->nullable()->constrained()->onDelete('cascade'); // optional
     $table->timestamps();
 });
+
 
     }
 

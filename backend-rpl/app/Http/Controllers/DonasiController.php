@@ -61,7 +61,7 @@ class DonasiController extends Controller
     }
 
     // ======================
-    // HAPUS DONASI
+    // Menghapus Donasi
     // ======================
     public function destroy(Donasi $donasi)
     {

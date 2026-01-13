@@ -16,7 +16,7 @@ return Application::configure(basePath: dirname(__DIR__))
         // middleware bawaan API
         $middleware->api();
 
-        // ⬇️ ALIAS MIDDLEWARE ROLE
+        // ALIAS MIDDLEWARE ROLE
         $middleware->alias([
             'role' => \App\Http\Middleware\RoleMiddleware::class,
         ]);

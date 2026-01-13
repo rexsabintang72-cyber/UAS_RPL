@@ -137,7 +137,4 @@ Route::middleware(['auth:sanctum', 'role:petugas'])->group(function () {
 
 Route::middleware('auth:sanctum')->get('/admin/laporan-pdf', [DonasiController::class, 'laporanPdf']);
 
-// USER BISA LIHAT DONASI MILIKNYA SENDIRI
-Route::middleware(['auth:sanctum', 'role:user'])->group(function () {
-    Route::get('/donasi/user', [DonasiController::class, 'donasiUser']);
-});
+

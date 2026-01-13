@@ -355,6 +355,25 @@ public function pelacakanPetugas()
     return response()->json($donasis);
 }
 
+// ======================
+// DONASI MILIK USER
+// ======================
+public function donasiUser()
+{
+    $user = Auth::user();
+
+    // Ambil donasi milik user login
+    $donasi = Donasi::with('donatur')
+        ->whereHas('donatur', function($q) use ($user) {
+            $q->where('user_id', $user->id);
+        })
+        ->orderBy('tanggal', 'desc')
+        ->get();
+
+    return response()->json([
+        'donasis' => $donasi
+    ]);
+}
 
 }
 

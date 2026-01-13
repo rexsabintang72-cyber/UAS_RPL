@@ -21,7 +21,7 @@ class DonasiController extends Controller
     }
 
     // ======================
-    // TAMBAH DONASI (ADMIN)
+    // TAMBAH DONASI (ADMIN / USER LOGIN / ANONIM)
     // ======================
     public function store(Request $request)
     {
@@ -98,7 +98,7 @@ class DonasiController extends Controller
     public function update(Request $request, Donasi $donasi)
     {
         $donasi->update($request->all());
-        return $donasi;
+        return response()->json($donasi);
     }
 
     // ======================
@@ -124,18 +124,14 @@ class DonasiController extends Controller
 
         if ($donasi->verifikasi_admin !== 'disetujui') {
             return response()->json([
-                'message' => 'Donasi belum diverifikasi admin',
-                'donasi' => $donasi->load('donatur')
+                'message' => 'Donasi belum diverifikasi admin'
             ], 403);
         }
 
         $donasi->status = $request->status;
         $donasi->save();
 
-        return response()->json([
-            'message' => 'Status donasi berhasil diperbarui',
-            'donasi' => $donasi->load('donatur')
-        ]);
+        return response()->json($donasi->load('donatur'));
     }
 
     // ======================
@@ -156,10 +152,7 @@ class DonasiController extends Controller
 
         $donasi->save();
 
-        return response()->json([
-            'message' => 'Verifikasi admin berhasil',
-            'donasi' => $donasi->load('donatur')
-        ]);
+        return response()->json($donasi->load('donatur'));
     }
 
     // ======================
@@ -175,26 +168,13 @@ class DonasiController extends Controller
             ->whereYear('tanggal', $tahun)
             ->get();
 
-        $donasiMasuk = $donasis->sum('jumlah');
-        $tersalurkan = $donasis->where('status', 'sudah disalurkan')->sum('jumlah');
-        $sisaDana = $donasiMasuk - $tersalurkan;
-        $donasiDitolak = $donasis->where('status', 'ditolak')->sum('jumlah');
-
-        $trend = Donasi::selectRaw('MONTH(tanggal) as bulan, SUM(jumlah) as total')
-            ->whereYear('tanggal', $tahun)
-            ->groupBy('bulan')
-            ->orderBy('bulan')
-            ->get();
-
         return response()->json([
             'summary' => [
-                'donasi_masuk' => $donasiMasuk,
-                'bantuan_tersalurkan' => $tersalurkan,
-                'sisa_dana' => $sisaDana,
-                'donasi_ditolak' => $donasiDitolak
+                'donasi_masuk' => $donasis->sum('jumlah'),
+                'bantuan_tersalurkan' => $donasis->where('status', 'sudah disalurkan')->sum('jumlah'),
+                'donasi_ditolak' => $donasis->where('status', 'ditolak')->sum('jumlah'),
             ],
-            'detail' => $donasis,
-            'trend' => $trend
+            'detail' => $donasis
         ]);
     }
 
@@ -211,104 +191,8 @@ class DonasiController extends Controller
             ->whereYear('tanggal', $tahun)
             ->get();
 
-        $donasiMasuk = $donasis->sum('jumlah');
-        $tersalurkan = $donasis->where('status', 'sudah disalurkan')->sum('jumlah');
-        $sisaDana = $donasiMasuk - $tersalurkan;
-        $donasiDitolak = $donasis->where('status', 'ditolak')->sum('jumlah');
-
-        $pdf = Pdf::loadView('pdf.laporan-donasi', compact(
-            'bulan',
-            'tahun',
-            'donasis',
-            'donasiMasuk',
-            'tersalurkan',
-            'sisaDana',
-            'donasiDitolak'
-        ));
-
+        $pdf = Pdf::loadView('pdf.laporan-donasi', compact('bulan', 'tahun', 'donasis'));
         return $pdf->download("laporan_donasi_{$bulan}_{$tahun}.pdf");
-    }
-
-    // ======================
-    // DONASI PUBLIC / ANONIM
-    // ======================
-    public function storePublic(Request $request)
-    {
-        $request->validate([
-            'jenis_donasi' => 'required|in:uang,barang',
-            'jumlah' => 'nullable|numeric',
-            'nama_barang' => 'nullable|string',
-            'jumlah_barang' => 'nullable|string',
-            'keterangan' => 'nullable|string',
-            'nama' => 'required|string',
-            'kontak' => 'required|string',
-        ]);
-
-        if ($request->jenis_donasi === 'uang' && !$request->jumlah) {
-            return response()->json(['message' => 'Jumlah donasi uang wajib diisi'], 422);
-        }
-
-        if ($request->jenis_donasi === 'barang' && (!$request->nama_barang || !$request->jumlah_barang)) {
-            return response()->json(['message' => 'Nama dan jumlah barang wajib diisi'], 422);
-        }
-
-        $donatur = Donatur::create([
-            'nama' => $request->nama,
-            'kontak' => $request->kontak,
-            'jenis_donatur' => 'anonim',
-            'user_id' => null
-        ]);
-
-        $donasi = Donasi::create([
-            'donatur_id' => $donatur->id,
-            'tanggal' => date('Y-m-d'),
-            'jenis_donasi' => $request->jenis_donasi,
-            'jumlah' => $request->jenis_donasi === 'uang' ? $request->jumlah : null,
-            'nama_barang' => $request->jenis_donasi === 'barang' ? $request->nama_barang : null,
-            'jumlah_barang' => $request->jenis_donasi === 'barang' ? $request->jumlah_barang : null,
-            'keterangan' => $request->jenis_donasi === 'barang' ? $request->keterangan : null,
-            'status' => 'diproses',
-            'verifikasi_admin' => 'pending'
-        ]);
-
-        return response()->json([
-            'message' => 'Donasi berhasil dikirim (anonim)',
-            'donasi' => $donasi->load('donatur')
-        ]);
-    }
-
-    // ======================
-    // DASHBOARD PETUGAS
-    // ======================
-    public function dashboardPetugas()
-    {
-        $donasis = Donasi::with('donatur')->orderBy('tanggal', 'desc')->get();
-
-        $totalDonasi = $donasis->sum('jumlah');
-        $totalDisalurkan = $donasis->where('status', 'sudah disalurkan')->sum('jumlah');
-        $sisaDana = $totalDonasi - $totalDisalurkan;
-        $donasiDitolak = $donasis->where('status', 'ditolak')->sum('jumlah');
-
-        return response()->json([
-            'donasis' => $donasis,
-            'stats' => compact('totalDonasi', 'totalDisalurkan', 'sisaDana', 'donasiDitolak')
-        ]);
-    }
-
-    // ======================
-    // LAPORAN PETUGAS
-    // ======================
-    public function laporanPetugas(Request $request)
-    {
-        return $this->laporan($request);
-    }
-
-    // ======================
-    // PELACAKAN PETUGAS
-    // ======================
-    public function pelacakanPetugas()
-    {
-        return Donasi::with('donatur')->orderBy('tanggal', 'desc')->get();
     }
 
     // ======================
@@ -319,7 +203,7 @@ class DonasiController extends Controller
         $user = Auth::user();
 
         $donasi = Donasi::with('donatur')
-            ->whereHas('donatur', fn($q) => $q->where('user_id', $user->id))
+            ->whereHas('donatur', fn ($q) => $q->where('user_id', $user->id))
             ->orderBy('tanggal', 'desc')
             ->get();
 
